@@ -50,7 +50,7 @@ Repeater {
         Rectangle {
             anchors.fill: parent
 
-            color: "white"
+            color: sysPalette.base
 
             ColumnLayout {
 
@@ -199,6 +199,16 @@ Repeater {
                         objectName: "rdm_server_info_tab_memory_usage"
                         id: view
 
+                        theme: {
+                            if (sysPalette.base.hslLightness < 0.4) {
+                                return ChartView.ChartThemeDark
+                            } else {
+                                return ChartView.ChartThemeLight
+                            }
+                        }
+
+                        backgroundColor: sysPalette.base
+
                         title: qsTranslate("RDM","Memory Usage")
                         antialiasing: true
 
@@ -256,7 +266,7 @@ Repeater {
                                 }
 
                                 var getValue = function (name) {
-                                    return parseFloat(tab.model.serverInfo["memory"][name] ) / (1024 * 1024)
+                                    return Math.round(parseFloat(tab.model.serverInfo["memory"][name] ) / (1024 * 1024)  * 100) / 100;
                                 }
 
                                 qmlUtils.addNewValueToDynamicChart(used_memory_series, getValue("used_memory"))
@@ -264,7 +274,10 @@ Repeater {
                                 qmlUtils.addNewValueToDynamicChart(used_memory_lua_series, getValue("used_memory_lua"))
                                 qmlUtils.addNewValueToDynamicChart(used_memory_peak_series, getValue("used_memory_peak"))
 
-                                axisY.max = getValue("used_memory_peak") + 1
+                                axisY.max = Math.max(getValue("used_memory_peak"),
+                                                     getValue("used_memory"),
+                                                     getValue("used_memory_rss"),
+                                                     getValue("used_memory_lua")) + 2;
                             }
                         }
                     }

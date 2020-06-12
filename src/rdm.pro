@@ -10,7 +10,7 @@ TARGET = rdm
 TEMPLATE = app
 
 !defined(VERSION, var) {
-    VERSION=2020.0.0-dev
+    VERSION=2020.1.0-dev
 }
 
 message($$VERSION)
@@ -73,7 +73,7 @@ win32 {
     QMAKE_TARGET_COMPANY = redisdesktop.com
     QMAKE_TARGET_PRODUCT = RedisDesktopManager
     QMAKE_TARGET_DESCRIPTION = "Open source GUI management tool for Redis"
-    QMAKE_TARGET_COPYRIGHT = "Igor Malinovskiy (C) 2013-2019"
+    QMAKE_TARGET_COPYRIGHT = "Igor Malinovskiy (C) 2013-2020"
 
     release: DESTDIR = ./../bin/windows/release
     debug:   DESTDIR = ./../bin/windows/debug
@@ -129,6 +129,8 @@ unix:!macx { # ubuntu & debian
     deskicon.path = /usr/share/applications
     deskicon.files =  $$PWD/resources/rdm.desktop
     INSTALLS += deskicon
+
+    RESOURCES += $$PWD/resources/fonts.qrc
 }
 
 UI_DIR = $$DESTDIR/ui
@@ -141,8 +143,7 @@ INCLUDEPATH += $$PWD/ \
     $$UI_DIR/ \
 
 RESOURCES += \
-    $$PWD/resources/images.qrc \
-    $$PWD/resources/fonts.qrc \    
+    $$PWD/resources/images.qrc \   
     $$PWD/qml/qml.qrc \
     $$PWD/py/py.qrc \
     $$PWD/resources/commands.qrc

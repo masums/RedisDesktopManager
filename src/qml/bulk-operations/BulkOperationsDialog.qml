@@ -1,6 +1,6 @@
 import QtQuick 2.3
 import QtQuick.Layouts 1.1
-import QtQuick.Controls 1.2
+import QtQuick.Controls 2.13
 import QtQuick.Dialogs 1.2
 
 import "./../common/"
@@ -56,80 +56,84 @@ Dialog {
 
     function validate() {
         if (root.operationName == "rdb_import" && !qmlUtils.fileExists(rdbPath.path)) {
+            rdbPath.validationError = true
             showError(qsTr("Invalid RDB path"), qsTr("Please specify valid path to RDB file"), "")
             return false;
         }
+        rdbPath.validationError = false
         return true;
     }
 
-    contentItem: Item {
+    contentItem: Rectangle {
         id: contentWrapper
         implicitWidth: 900
         implicitHeight: 600
+        color: sysPalette.base
 
-        state: root.operationName
-
-        states: [
-            State {
-                name: "delete_keys"
-                PropertyChanges { target: operationLabel; text: qsTr("Delete keys") }
-                PropertyChanges { target: actionButton; text:  qsTr("Delete keys") }
-                PropertyChanges { target: ttlField; visible: false }
-                PropertyChanges { target: replaceKeysField; visible: false }
-                PropertyChanges { target: targetConnectionSettings; visible: false }
-                PropertyChanges { target: contentWrapper; width: 600 }
-                PropertyChanges { target: rdbImportFields; visible: false; }
-            },
-            State {
-                name: "ttl"
-                PropertyChanges { target: operationLabel; text: qsTr("Set TTL for multiple keys") }
-                PropertyChanges { target: actionButton; text: qsTr("Set TTL") }
-                PropertyChanges { target: ttlField; visible: true }
-                PropertyChanges { target: replaceKeysField; visible: false }
-                PropertyChanges { target: targetConnectionSettings; visible: false }
-                PropertyChanges { target: contentWrapper; width: 600 }
-                PropertyChanges { target: rdbImportFields; visible: false; }
-            },
-            State {
-                name: "copy_keys"
-                PropertyChanges { target: operationLabel; text: qsTr("Copy keys to another database") }
-                PropertyChanges { target: actionButton; text:  qsTr("Copy keys") }
-                PropertyChanges { target: ttlField; visible: true }
-                PropertyChanges { target: replaceKeysField; visible: true }
-                PropertyChanges { target: targetConnectionSettings; visible: true }
-                PropertyChanges { target: contentWrapper; width: 1000 }
-                PropertyChanges { target: rdbImportFields; visible: false; }
-            },
-
-            State {
-                name: "rdb_import"
-                PropertyChanges { target: operationLabel; text: qsTr("Import data from rdb file") }
-                PropertyChanges { target: actionButton; text:  qsTr("Import") }
-                PropertyChanges { target: ttlField; visible: false }
-                PropertyChanges { target: replaceKeysField; visible: false }
-                PropertyChanges { target: targetConnectionSettings; visible: false }
-                PropertyChanges { target: contentWrapper; width: 600 }
-                PropertyChanges { target: rdbImportFields; visible: true; }
-            }
-        ]
-
-        ColumnLayout {
+        Control {
+            palette: approot.palette
             anchors.fill: parent
-            anchors.margins: 20
 
-            Text {
-                id: operationLabel
-                font.pixelSize: 20
-            }
+            state: root.operationName
 
-            Rectangle {
-                color: "#e2e2e2"
-                Layout.preferredHeight: 1
-                Layout.fillWidth: true
-            }
+            states: [
+                State {
+                    name: "delete_keys"
+                    PropertyChanges { target: operationLabel; text: qsTr("Delete keys") }
+                    PropertyChanges { target: actionButton; text:  qsTr("Delete keys") }
+                    PropertyChanges { target: ttlField; visible: false }
+                    PropertyChanges { target: replaceKeysField; visible: false }
+                    PropertyChanges { target: targetConnectionSettings; visible: false }
+                    PropertyChanges { target: rdbImportFields; visible: false; }
+                },
+                State {
+                    name: "ttl"
+                    PropertyChanges { target: operationLabel; text: qsTr("Set TTL for multiple keys") }
+                    PropertyChanges { target: actionButton; text: qsTr("Set TTL") }
+                    PropertyChanges { target: ttlField; visible: true }
+                    PropertyChanges { target: replaceKeysField; visible: false }
+                    PropertyChanges { target: targetConnectionSettings; visible: false }
+                    PropertyChanges { target: rdbImportFields; visible: false; }
+                },
+                State {
+                    name: "copy_keys"
+                    PropertyChanges { target: operationLabel; text: qsTr("Copy keys to another database") }
+                    PropertyChanges { target: actionButton; text:  qsTr("Copy keys") }
+                    PropertyChanges { target: ttlField; visible: true }
+                    PropertyChanges { target: replaceKeysField; visible: true }
+                    PropertyChanges { target: targetConnectionSettings; visible: true }
+                    PropertyChanges { target: rdbImportFields; visible: false; }
+                },
 
-            RowLayout {
-                Layout.fillWidth: true
+                State {
+                    name: "rdb_import"
+                    PropertyChanges { target: operationLabel; text: qsTr("Import data from rdb file") }
+                    PropertyChanges { target: actionButton; text:  qsTr("Import") }
+                    PropertyChanges { target: ttlField; visible: false }
+                    PropertyChanges { target: replaceKeysField; visible: false }
+                    PropertyChanges { target: targetConnectionSettings; visible: false }
+                    PropertyChanges { target: rdbImportFields; visible: true; }
+                }
+            ]
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: 20
+
+                Label {
+                    id: operationLabel
+                    font.pixelSize: 20
+                }
+
+                Rectangle {
+                    color: "#e2e2e2"
+                    Layout.preferredHeight: 1
+                    Layout.fillWidth: true
+                }
+
+                Item {
+                    Layout.preferredHeight: 5
+                }
 
                 GridLayout {
                     id: sourceConnectionSettings
@@ -140,20 +144,24 @@ Dialog {
                     Label {
                         text: qsTr("Redis Server:")
                         Layout.preferredWidth: 250
+                        Layout.preferredHeight: 25
                     }
 
                     Label {
                         Layout.fillWidth: true
+                        Layout.preferredHeight: 25
                         text: bulkOperations.connectionName
                     }
 
                     Label {
                         text: qsTr("Database number:")
                         Layout.preferredWidth: 250
+                        Layout.preferredHeight: 25
                     }
 
                     Label {
                         Layout.fillWidth: true
+                        Layout.preferredHeight: 25
                         text: bulkOperations.dbIndex
                     }
 
@@ -192,15 +200,14 @@ Dialog {
                             Layout.preferredWidth: 250
                         }
 
-                        SpinBox {
+                        BetterSpinBox {
                             id: rdbDb
 
                             Layout.fillWidth: true
 
-                            minimumValue: 0
-                            maximumValue: 10000000000
+                            from: 0
+                            to: 10000000
                             value: 0
-                            decimals: 0
                             onValueChanged: {
                                 setMetadata()
                                 root.resetKeysPreview()
@@ -213,7 +220,7 @@ Dialog {
                         Layout.preferredWidth: 250
                     }
 
-                    TextField {
+                    BetterTextField {
                         Layout.fillWidth: true
 
                         text: bulkOperations.keyPattern
@@ -234,17 +241,16 @@ Dialog {
                             Layout.preferredWidth: 250
                         }
 
-                        SpinBox {
+                        BetterSpinBox {
                             id: ttlValue
 
                             Layout.fillWidth: true
 
                             objectName: "rdm_bulk_operations_dialog_ttl_value"
 
-                            minimumValue: -1
-                            maximumValue: 10000000000
+                            from: -1
+                            to: 10000000
                             value: 0
-                            decimals: 0
                         }
                     }
                 }
@@ -252,33 +258,35 @@ Dialog {
                 GridLayout {
                     id: targetConnectionSettings
                     columns: 2
+                    Layout.fillWidth: true
                     visible: bulkOperations.multiConnectionOperation()
 
                     Label {
+                        Layout.preferredWidth: 250
                         text: qsTr("Destination Redis Server:")
                     }
 
-                    ComboBox {
+                    BetterComboBox {
                         Layout.fillWidth: true
 
                         id: targetConnection
                     }
 
                     Label {
+                        Layout.preferredWidth: 250
                         text: qsTr("Destination Redis Server Database Index:")
                     }
 
-                    SpinBox {
+                    BetterSpinBox {
                         id: targetDatabaseIndex
 
                         Layout.fillWidth: true
 
                         objectName: "rdm_bulk_operations_dialog_target_db_index"
 
-                        minimumValue: 0
-                        maximumValue: 10000000000
+                        from: 0
+                        to: 10000000
                         value: 0
-                        decimals: 0
                     }
 
                     RowLayout{
@@ -298,185 +306,162 @@ Dialog {
                         }
                     }
                 }
-            }
 
+                Item { Layout.preferredHeight: 10 }
 
-            Item { Layout.preferredHeight: 10 }
-
-            Button {
-                id: btnShowAffectedKeys
-                text: root.operationName == "rdb_import"? qsTr("Show matched keys") : qsTr("Show Affected keys")
-                onClicked: {
-                    if (!validate()) {
-                        return;
-                    }
-
-                    uiBlocker.visible = true
-                    setMetadata()
-                    root.loadKeys()
-                    btnShowAffectedKeys.visible = false
-                    spacer.visible = false
-                    keysPreview.visible = true
-                }
-            }
-
-            ColumnLayout {
-                id: keysPreview
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-
-                visible: false
-
-                Text {
-                    text: root.operationName == "rdb_import"? qsTr("Matched keys:")  : qsTr("Affected keys:")
-                }
-
-                Rectangle {
-                    id: listContainer
-                    color: "#eee"
-
-                    border.color: "#ccc"
-                    border.width: 1
-
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-
-                    ScrollView {
-                        anchors.fill: parent
-                        anchors.margins: 10
-
-                        verticalScrollBarPolicy: Qt.ScrollBarAlwaysOn
-
-                        ListView {
-                            id: affectedKeysListView
-                            width: listContainer.width * 0.9
-
-                            delegate: Text { text: (index+1) + ". " + modelData}
-                        }
-                    }
-
-                    Connections {
-                        target: bulkOperations
-
-                        onAffectedKeys: {
-                            console.log("Affected keys loaded")
-                            affectedKeysListView.model = r
-                            uiBlocker.visible = false
-                        }
-
-                        onOperationFinished: {
-                            affectedKeysListView.model = []
-                            uiBlocker.visible = false
-                            bulkSuccessNotification.text = qsTr("Bulk Operation finished.")
-                            bulkSuccessNotification.open()
-                        }
-
-                        onError: {
-                            showError(qsTr("Bulk Operation finished with errors"), e, details)
-                        }
-                    }
-                }
-            }
-
-            Item { id: spacer; Layout.fillHeight: true }
-
-            RowLayout {
-                Layout.fillWidth: true
-
-                Item { Layout.fillWidth: true; }
-
-                Button {
-                    id: actionButton
-                    objectName: "rdm_bulk_operations_dialog_action_button"
-
-
+                BetterButton {
+                    id: btnShowAffectedKeys
+                    text: root.operationName == "rdb_import"? qsTr("Show matched keys") : qsTr("Show Affected keys")
                     onClicked: {
                         if (!validate()) {
                             return;
                         }
 
+                        uiBlocker.visible = true
                         setMetadata()
-                        bulkConfirmation.open()
+                        root.loadKeys()
+                        btnShowAffectedKeys.visible = false
+                        spacer.visible = false
+                        keysPreview.visible = true
                     }
                 }
 
-                Button {
-                    text: qsTr("Cancel")
-                    onClicked: root.close()
-                }
-            }
-        }
-
-
-        Rectangle {
-            id: uiBlocker
-            visible: false
-            anchors.fill: parent
-            color: Qt.rgba(0, 0, 0, 0.1)
-
-            Item {
-                anchors.fill: parent
-
                 ColumnLayout {
-                    anchors.centerIn: parent;
+                    id: keysPreview
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
 
-                    BusyIndicator { running: true }
+                    visible: false
+
                     Label {
-                        text: {
-                            if (bulkOperations.operationProgress > 0)
-                                return "Processed: " + bulkOperations.operationProgress
-                            else {
-                                return "Getting list of affected keys..."
+                        text: root.operationName == "rdb_import"? qsTr("Matched keys:")  : qsTr("Affected keys:")
+                    }
+
+                    FastTextView {
+                        id: affectedKeysListView
+                        color: sysPalette.base
+
+                        border.color: sysPalette.shadow
+                        border.width: 1
+
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+
+                        Connections {
+                            target: bulkOperations
+
+                            onAffectedKeys: {
+                                console.log("Affected keys loaded")
+                                affectedKeysListView.model = r
+                                uiBlocker.visible = false
+                            }
+
+                            onOperationFinished: {
+                                affectedKeysListView.model = []
+                                uiBlocker.visible = false
+                                bulkSuccessNotification.text = qsTr("Bulk Operation finished.")
+                                bulkSuccessNotification.open()
+                            }
+
+                            onError: {
+                                showError(qsTr("Bulk Operation finished with errors"), e, details)
                             }
                         }
                     }
                 }
+
+                Item { id: spacer; Layout.fillHeight: true }
+
+                RowLayout {
+                    Layout.fillWidth: true
+
+                    Item { Layout.fillWidth: true; }
+
+                    BetterButton {
+                        id: actionButton
+                        objectName: "rdm_bulk_operations_dialog_action_button"
+
+
+                        onClicked: {
+                            if (!validate()) {
+                                return;
+                            }
+
+                            setMetadata()
+                            bulkConfirmation.open()
+                        }
+                    }
+
+                    BetterButton {
+                        text: qsTr("Cancel")
+                        onClicked: root.close()
+                    }
+                }
             }
 
-            MouseArea { anchors.fill: parent }
-        }
 
-        MessageDialog {
-            id: bulkErrorNotification
-            visible: false
-            modality: Qt.WindowModal
-            icon: StandardIcon.Warning
-            standardButtons: StandardButton.Ok
-        }
+            Rectangle {
+                id: uiBlocker
+                visible: false
+                anchors.fill: parent
+                color: Qt.rgba(0, 0, 0, 0.1)
 
-        MessageDialog {
-            id: bulkSuccessNotification
-            visible: false
-            modality: Qt.WindowModal
-            icon: StandardIcon.Information
-            standardButtons: StandardButton.Ok
+                Item {
+                    anchors.fill: parent
 
-            onAccepted: cleanUp()
+                    ColumnLayout {
+                        anchors.centerIn: parent;
 
-            onVisibilityChanged: {
-                if (visible == false)
-                    cleanUp()
+                        BusyIndicator { running: true }
+                        Label {
+                            text: {
+                                if (bulkOperations.operationProgress > 0)
+                                    return "Processed: " + bulkOperations.operationProgress
+                                else {
+                                    return "Getting list of affected keys..."
+                                }
+                            }
+                        }
+                    }
+                }
+
+                MouseArea { anchors.fill: parent }
             }
 
-            function cleanUp() {
-                bulkOperations.clearOperation();
-                uiBlocker.visible = false
-                root.close()
+            OkDialog {
+                id: bulkErrorNotification
+                modality: Qt.NonModal
+                visible: false
             }
-        }
 
-        MessageDialog {
-            id: bulkConfirmation
-            title: qsTr("Confirmation")
-            text: qsTr("Do you really want to perform bulk operation?")
-            onYes: {
-                uiBlocker.visible = true
-                bulkOperations.runOperation(targetConnection.currentIndex, targetDatabaseIndex.value)
+            OkDialog {
+                id: bulkSuccessNotification
+                modality: Qt.ApplicationModal
+                visible: false
+                onAccepted: cleanUp()
+
+                onVisibleChanged: {
+                    if (visible == false)
+                        cleanUp()
+                }
+
+                function cleanUp() {
+                    bulkOperations.clearOperation();
+                    uiBlocker.visible = false
+                    root.close()
+                }
             }
-            visible: false
-            modality: Qt.ApplicationModal
-            icon: StandardIcon.Warning
-            standardButtons: StandardButton.Yes | StandardButton.No
+
+            BetterMessageDialog {
+                id: bulkConfirmation
+                title: qsTr("Confirmation")
+                text: qsTr("Do you really want to perform bulk operation?")
+                onYesClicked: {
+                    uiBlocker.visible = true
+                    bulkOperations.runOperation(targetConnection.currentIndex, targetDatabaseIndex.value)
+                }
+                visible: false
+            }
         }
     }
 }

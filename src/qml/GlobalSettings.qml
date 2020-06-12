@@ -1,6 +1,7 @@
 import QtQuick 2.3
 import QtQuick.Layouts 1.1
-import QtQuick.Controls 1.2
+import QtQuick.Controls 2.13
+import QtQuick.Controls 1.4 as LC
 import QtQuick.Dialogs 1.2
 import Qt.labs.settings 1.0
 import QtQuick.Window 2.3
@@ -17,41 +18,44 @@ Dialog {
     contentItem: Rectangle {
         id: dialogRoot
         implicitWidth: 800
-        implicitHeight: PlatformUtils.isOSX()? 500 : 600
+        implicitHeight: PlatformUtils.isOSX()? 500 : 680
 
-        border.color: "#eeeeee"
-        border.width: 1
+        color: sysPalette.base
 
-        Item {
+        Control {
+            palette: approot.palette
             anchors.fill: parent
             anchors.margins: 20
 
             ScrollView {
                 id: globalSettingsScrollView
                 width: parent.width
-                height: parent.height
-                horizontalScrollBarPolicy: Qt.ScrollBarAlwaysOff
+                height: parent.height                
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
                 ColumnLayout {
                     id: innerLayout
-                    width: globalSettingsScrollView.width - 25
+                    width: PlatformUtils.isOSX()? globalSettingsScrollView.width - 25 : globalSettingsScrollView.width
                     height: (dialogRoot.height - 50 > implicitHeight) ? dialogRoot.height - 50 : implicitHeight
 
                     SettingsGroupTitle {
                         text: qsTranslate("RDM","General")
                     }
 
+                    Label {
+                        color: "grey"
+                        text: qsTranslate("RDM","Application will be restarted to apply this setting.")
+                    }
+
                     ComboboxOption {
                         id: appLang
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 40
+                        Layout.preferredHeight: 30
 
                         model: ["system", "en_US", "zh_CN", "zh_TW", "ru_RU", "es_ES", "ja_JP"]
                         value: "system"
                         label: qsTranslate("RDM","Language")
-                        description: qsTranslate("RDM","Application will be restarted to apply this setting.")
-
                         onValueChanged: root.restartRequired = true
                     }
 
@@ -59,12 +63,11 @@ Dialog {
                         id: appFont
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 40
+                        Layout.preferredHeight: 30
 
                         value: Qt.platform.os == "osx"? "Helvetica Neue" : "Open Sans"
                         model: Qt.fontFamilies()
-                        label: qsTranslate("RDM","Font")
-                        description: qsTranslate("RDM","Application will be restarted to apply this setting.")
+                        label: qsTranslate("RDM","Font")                        
 
                         onValueChanged: root.restartRequired = true
                     }
@@ -73,12 +76,24 @@ Dialog {
                         id: appFontSize
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 40
+                        Layout.preferredHeight: 30
 
-                        model: ["8", "9", "10", "11", "12"]
+                        model: ["8", "9", "10", "11", "12", "13", "14", "15", "16"]
                         value: Qt.platform.os == "osx"? "12" : "11"
-                        label: qsTranslate("RDM","Font Size")
-                        description: qsTranslate("RDM","Application will be restarted to apply this setting.")
+                        label: qsTranslate("RDM","Font Size")                        
+
+                        onValueChanged: root.restartRequired = true
+                    }
+
+                    ComboboxOption {
+                        id: valueEditorFontSize
+
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 30
+
+                        model: ["8", "9", "10", "11", "12", "13", "14", "15", "16"]
+                        value: Qt.platform.os == "osx"? "12" : "11"
+                        label: qsTranslate("RDM","Value Editor Font Size")                        
 
                         onValueChanged: root.restartRequired = true
                     }
@@ -87,11 +102,10 @@ Dialog {
                         id: systemProxy
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 40
+                        Layout.preferredHeight: 30
 
                         value: false
-                        label: qsTranslate("RDM","Use system proxy settings")
-                        description: qsTranslate("RDM","Application will be restarted to apply this setting.")
+                        label: qsTranslate("RDM","Use system proxy settings")                        
 
                         onValueChanged: root.restartRequired = true
                     }
@@ -105,7 +119,7 @@ Dialog {
                         id: nsReload
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 40
+                        Layout.preferredHeight: 30
 
                         value: true
                         label: qsTranslate("RDM","Reopen namespaces on reload")
@@ -116,7 +130,7 @@ Dialog {
                         id: keySorting
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 40
+                        Layout.preferredHeight: 30
 
                         value: true
                         label: qsTranslate("RDM","Enable key sorting in tree")
@@ -127,7 +141,7 @@ Dialog {
                         id: liveKeyLimit
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 40
+                        Layout.preferredHeight: 30
 
                         min: 100
                         max: 100000
@@ -140,7 +154,7 @@ Dialog {
                         id: liveUpdateInterval
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 40
+                        Layout.preferredHeight: 30
 
                         min: 3
                         max: 100000
@@ -156,32 +170,33 @@ Dialog {
 
                     Text {
                         visible: !PlatformUtils.isOSX()
-                        text: qsTranslate("RDM","Formatters path: %0").arg(formattersManager.formattersPath())
+                        text: formattersManager? qsTranslate("RDM","Formatters path: %0").arg(formattersManager.formattersPath()) : ""
                         font.pixelSize: 12
                         color: "grey"
                     }
 
-                    TableView {
+                    LC.TableView {
                         visible: !PlatformUtils.isOSX()
+
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         verticalScrollBarPolicy: Qt.ScrollBarAlwaysOn
 
-                        TableViewColumn {
+                        LC.TableViewColumn {
                             role: "name"
                             title: qsTranslate("RDM","Name")
                         }
-                        TableViewColumn {
+                        LC.TableViewColumn {
                             role: "version"
                             width: 75
                             title: qsTranslate("RDM","Version")
                         }
-                        TableViewColumn {
+                        LC.TableViewColumn {
                             role: "cmd"
                             title: qsTranslate("RDM","Command")
                         }
 
-                        TableViewColumn {
+                        LC.TableViewColumn {
                             width: 250
                             role: "description"
                             title: qsTranslate("RDM","Description")
@@ -198,17 +213,21 @@ Dialog {
                         Layout.fillWidth: true
 
                         Item { Layout.fillWidth: true; }
-                        Button {
+                        BetterButton {
                             text: qsTranslate("RDM","OK")
                             onClicked: {
-                                if (root.restartRequired) {
+                                if (root.restartRequired === true) {
                                     // restart app
-                                    Qt.exit(1000)
+                                    Qt.exit(1001)
                                 }
 
                                 restartRequired = false
                                 root.close()
                             }
+                        }
+                        BetterButton {
+                            text: qsTr("Cancel")
+                            onClicked: root.close()
                         }
                     }
                 }
@@ -226,6 +245,7 @@ Dialog {
         property alias liveUpdateInterval: liveUpdateInterval.value
         property alias appFont: appFont.value
         property alias appFontSize: appFontSize.value
+        property alias valueEditorFontSize: valueEditorFontSize.value
         property alias locale: appLang.value
         property alias useSystemProxy: systemProxy.value
     }
@@ -235,5 +255,9 @@ Dialog {
         category: "formatters"
 
         property var formatters
+    }
+
+    Component.onCompleted: {
+        restartRequired = false
     }
 }

@@ -3,6 +3,7 @@ import QtQuick.Controls 2.13
 import QtQuick.Layouts 1.1
 import Qt.labs.settings 1.0
 import "../../common/"
+import "../../common/platformutils.js" as PlatformUtils
 
 Item
 {
@@ -18,6 +19,31 @@ Item
     property int valueCompression: 0
     property string formatterSettingsCategory: "formatters_value"    
     property alias readOnly: textView.readOnly
+    property string _jsFormatterStyles: {
+        return "font-size: "
+                + appSettings.valueEditorFontSize
+                + "px; font-family: "
+                + PlatformUtils.monospacedFontFamily()
+    }
+    property var _jsFormatterColorMap: {
+        if (sysPalette.base.hslLightness < 0.4) {
+            return {
+                string: '#05a605',
+                number: '#008cff',
+                boolean: '#d62929',
+                null: '#a8a8a8',
+                key: '#fcfcfc'
+            };
+        } else {
+            return {
+                string: '#008000',
+                number: '#0000ff',
+                boolean: '#b22222',
+                null: '#808080',
+                key: '#000000'
+            };
+        }
+    }
 
     function initEmpty() {
         // init editor with empty model
@@ -72,7 +98,7 @@ Item
             }
 
             if (textView.format === "json") {
-                Formatters.json.getRaw(textView.model.getText(), function (jsonError, plainText) {
+                formatterSelector.model.getJSONFormatter().getRaw(textView.model.getText(), function (jsonError, plainText) {
                     if (jsonError) {
                         return callback(jsonError, "")
                     }
@@ -172,8 +198,11 @@ Item
 
         uiBlocker.visible = true
 
-        if (formatter['name'] === 'JSON') {
-            jsonFormattingWorker.sendMessage(String(root.value))
+        if (formatter["name"] === "JSON") {
+            jsonFormattingWorker.sendMessage({"isReadOnly": false,
+                                              "data": String(root.value),
+                                              "style": _jsFormatterStyles,
+                                              "color_map": _jsFormatterColorMap})
         } else {
             formatter.getFormatted(root.value, function (error, formatted, isReadOnly, format) {
 
@@ -184,7 +213,11 @@ Item
                 textView.format = format
 
                 if (format === "json") {
-                    jsonFormattingWorker.sendMessage(String(formatted))
+                    jsonFormattingWorker.sendMessage({"error": error,
+                                                      "isReadOnly": isReadOnly,
+                                                      "data": String(formatted),
+                                                      "style": _jsFormatterStyles,
+                                                      "color_map": _jsFormatterColorMap})
                 } else {
                     process(error, formatted, isReadOnly, format);
                 }
@@ -221,21 +254,28 @@ Item
 
         source: "./formatters/json-tools.js"
         onMessage: {
-            textView.format = messageObject.format
             processFormatted(messageObject.error, messageObject.formatted, messageObject.isReadOnly, messageObject.format);
         }
 
         function processFormatted(error, formatted, isReadOnly, format) {
-            if (error || !formatted) {
-                uiBlocker.visible = false
-                formatterSelector.currentIndex = valueFormattersModel.guessFormatter(isBin) // Reset formatter to plain text
-                notification.showError(error || qsTranslate("RDM","Unknown formatter error (Empty response)"))
-                return
-            }
-
             textView.textFormat = (format === "html")
                 ? TextEdit.RichText
                 : TextEdit.PlainText;
+
+            if (error || !formatted) {
+                if (formatted) {
+                    defaultFormatterSettings.defaultFormatterIndex = formatterSelector.currentIndex
+                    textView.model = qmlUtils.wrapLargeText(formatted)
+                } else {
+                    var isBin = false
+                    formatterSelector.currentIndex = valueFormattersModel.guessFormatter(isBin) // Reset formatter to plain text
+                }
+                textView.readOnly = isReadOnly
+                root.isEdited = false
+                uiBlocker.visible = false
+                notification.showError(error || qsTranslate("RDM","Unknown formatter error (Empty response)"))
+                return
+            }
 
             defaultFormatterSettings.defaultFormatterIndex = formatterSelector.currentIndex
             textView.model = qmlUtils.wrapLargeText(formatted)
@@ -252,7 +292,7 @@ Item
         RowLayout{
             Layout.fillWidth: true
 
-            Text { text: root.fieldLabel }
+            Label { text: root.fieldLabel }
             TextEdit {
                 Layout.preferredWidth: 150
                 text: qsTranslate("RDM", "Size: ") + qmlUtils.humanSize(qmlUtils.binaryStringLength(value));
@@ -260,8 +300,8 @@ Item
                 selectByMouse: true
                 color: "#ccc"
             }
-            Text { id: binaryFlag; text: qsTranslate("RDM","[Binary]"); visible: false; color: "green"; }
-            Text { text: qsTranslate("RDM"," [Compressed: ") + qmlUtils.compressionAlgName(root.valueCompression) + "]"; visible: root.valueCompression > 0; color: "red"; }
+            Label { id: binaryFlag; text: qsTranslate("RDM","[Binary]"); visible: false; color: "green"; }
+            Label { text: qsTranslate("RDM"," [Compressed: ") + qmlUtils.compressionAlgName(root.valueCompression) + "]"; visible: root.valueCompression > 0; color: "red"; }
             Item { Layout.fillWidth: true }
 
             ImageButton {
@@ -275,7 +315,7 @@ Item
                 }
             }
 
-            Text { visible: showFormatters; text: qsTranslate("RDM","View as:") }
+            Label { visible: showFormatters; text: qsTranslate("RDM","View as:") }
 
             Settings {
                 id: defaultFormatterSettings
@@ -297,7 +337,7 @@ Item
                 }
             }
 
-            Text { visible: !showFormatters && qmlUtils.binaryStringLength(root.value) > valueSizeLimit; text: qsTranslate("RDM","Large value (>150kB). Formatters is not available."); color: "red"; }
+            Label { visible: !showFormatters && qmlUtils.binaryStringLength(root.value) > valueSizeLimit; text: qsTranslate("RDM","Large value (>150kB). Formatters are not available."); color: "red"; }
         }
 
         Rectangle {
@@ -306,8 +346,8 @@ Item
             Layout.fillHeight: true
             Layout.preferredHeight: 100
 
-            color: "white"
-            border.color: "#cccccc"
+            color: sysPalette.base
+            border.color: sysPalette.mid
             border.width: 1
             clip: true
 
@@ -352,7 +392,7 @@ Item
                 }
         }
 
-        Text {
+        Label {
             id: validationError
             color: "red"
             visible: false

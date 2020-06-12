@@ -10,56 +10,62 @@ import "./common"
 ToolBar {
     RowLayout {
         anchors.fill: parent
+        spacing: 0
 
-        BetterButton {
-            Layout.preferredWidth: 190
-            iconSource: "qrc:/images/add.svg"
-            text: qsTranslate("RDM","Connect to Redis Server")
-            objectName: "rdm_connect_to_redis_server_btn"
+        RowLayout {
+            Layout.maximumWidth: connectionsTree.width + 1
 
-            onClicked: {
-                connectionSettingsDialog.settings = connectionsManager.createEmptyConfig()
-                connectionSettingsDialog.open()
+            BetterButton {
+                Layout.fillWidth: true
+                Layout.minimumWidth: 190
+                iconSource: "qrc:/images/add.svg"
+                text: qsTranslate("RDM","Connect to Redis Server")
+                objectName: "rdm_connect_to_redis_server_btn"
+
+                onClicked: {
+                    connectionSettingsDialog.settings = connectionsManager.createEmptyConfig()
+                    connectionSettingsDialog.open()
+                }
+            }
+
+            BetterButton {
+                Layout.fillWidth: true
+                iconSource: "qrc:/images/import.svg"
+                text: width < 100 ? "" : qsTranslate("RDM","Import")
+                tooltip: qsTranslate("RDM","Import Connections")
+                objectName: "rdm_import_connections_btn"
+
+                onClicked: importConnectionsDialog.open()
+
+                FileDialog {
+                    id: importConnectionsDialog
+                    title: qsTranslate("RDM","Import Connections")
+                    nameFilters: ["RDM Connections (*.xml *.json)"]
+                    selectExisting: true
+                    onAccepted: connectionsManager.importConnections(qmlUtils.getPathFromUrl(fileUrl))
+                }
+            }
+
+            BetterButton {
+                Layout.fillWidth: true
+                iconSource: "qrc:/images/export.svg"
+                text: width < 100 ? "" : qsTranslate("RDM","Export")
+                tooltip: qsTranslate("RDM","Export Connections")
+                objectName: "rdm_export_connections_btn"
+
+                onClicked: exportConnectionsDialog.open()
+
+                FileDialog {
+                    id: exportConnectionsDialog
+                    title: qsTranslate("RDM","Import Connections")
+                    nameFilters: ["RDM Connections (*.json)"]
+                    selectExisting: false
+                    onAccepted: connectionsManager.saveConnectionsConfigToFile(qmlUtils.getPathFromUrl(fileUrl))
+                }
             }
         }
 
-        BetterButton {
-            Layout.preferredWidth: 90
-            iconSource: "qrc:/images/import.svg"
-            text: qsTranslate("RDM","Import")
-            tooltip: qsTranslate("RDM","Import Connections")
-            objectName: "rdm_import_connections_btn"
-
-            onClicked: importConnectionsDialog.open()
-
-            FileDialog {
-                id: importConnectionsDialog
-                title: qsTranslate("RDM","Import Connections")
-                nameFilters: ["RDM Connections (*.xml *.json)"]
-                selectExisting: true
-                onAccepted: connectionsManager.importConnections(qmlUtils.getPathFromUrl(fileUrl))
-            }
-        }
-
-        BetterButton {
-            Layout.preferredWidth: 90
-            iconSource: "qrc:/images/export.svg"
-            text: qsTranslate("RDM","Export")
-            tooltip: qsTranslate("RDM","Export Connections")
-            objectName: "rdm_export_connections_btn"
-
-            onClicked: exportConnectionsDialog.open()
-
-            FileDialog {
-                id: exportConnectionsDialog
-                title: qsTranslate("RDM","Import Connections")
-                nameFilters: ["RDM Connections (*.json)"]
-                selectExisting: false
-                onAccepted: connectionsManager.saveConnectionsConfigToFile(qmlUtils.getPathFromUrl(fileUrl))
-            }
-        }
-
-        Rectangle { width: 1; color: "lightgrey"; Layout.fillHeight: true;}
+        Rectangle { width: 1; color: sysPalette.mid; Layout.fillHeight: true;}
 
         Item { Layout.fillWidth: true }
 
@@ -101,6 +107,13 @@ ToolBar {
         Item { Layout.fillWidth: true }
 
         BetterButton {
+            iconSource: "qrc:/images/log.svg"
+            text: qsTranslate("RDM","Log")
+
+            onClicked: logDrawer.open()
+        }
+
+        BetterButton {
             objectName: "rdm_global_settings_btn"
             iconSource: "qrc:/images/settings.svg"
             text: qsTranslate("RDM","Settings")
@@ -108,14 +121,7 @@ ToolBar {
             onClicked: {
                 settingsDialog.open()
             }
-        }
-
-        BetterButton {
-            iconSource: "qrc:/images/log.svg"
-            text: qsTranslate("RDM","Log")
-
-            onClicked: logDrawer.open()
-        }
+        }   
     }
 }
 

@@ -12,9 +12,9 @@ Item {
     Rectangle {
         id: background
         anchors.fill: parent
-        border.color: root.selected ? sysPalette.mid : "lightgrey"
+        border.color: root.selected ? sysPalette.midlight : sysPalette.mid
         border.width: 1
-        color: root.selected ? sysPalette.highlight : "transparent"
+        color: root.selected ? sysPalette.highlight : sysPalette.base
         clip: true
 
         Text {
@@ -23,7 +23,8 @@ Item {
             elide: Text.ElideRight
             wrapMode: Text.WrapAnywhere
             maximumLineCount: 1
-            color: root.selected ? sysPalette.highlightText : sysPalette.text
+            color: root.selected ? sysPalette.highlightedText : sysPalette.text
+            textFormat: Text.PlainText
         }
     }
 
@@ -31,8 +32,8 @@ Item {
         if (t === "")
             return t
 
-        if (qmlUtils.binaryStringLength(t) > 1000) {
-            return qmlUtils.printable(t, false, 1000) + "..."
+        if (qmlUtils.binaryStringLength(t) > 100) {
+            return qmlUtils.printable(t, false, 100) + "..."
         }
 
         return qmlUtils.printable(t)

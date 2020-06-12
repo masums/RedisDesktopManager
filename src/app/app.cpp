@@ -154,6 +154,9 @@ void Application::initAppFonts() {
 #ifdef Q_OS_MAC
   QString defaultFontName("Helvetica Neue");
   int defaultFontSize = 12;
+#elif defined(Q_OS_WINDOWS)
+  QString defaultFontName("Segoe UI");
+  int defaultFontSize = 11;
 #else
   QString defaultFontName("Open Sans");
   int defaultFontSize = 11;
@@ -162,15 +165,18 @@ void Application::initAppFonts() {
   QString appFont = settings.value("app/appFont", defaultFontName).toString();
   int appFontSize = settings.value("app/appFontSize", defaultFontSize).toInt();
 
-#ifdef Q_OS_LINUX
+
   if (appFont == "Open Sans") {
+#if defined(Q_OS_LINUX)
     int result = QFontDatabase::addApplicationFont("://fonts/OpenSans.ttc");
 
     if (result == -1) {
       appFont = "Ubuntu";
     }
-  }
+#elif defined (Q_OS_WINDOWS)
+    appFont = defaultFontName;
 #endif
+  }
 
   qDebug() << "App font:" << appFont << appFontSize;
   QFont defaultFont(appFont, appFontSize);
@@ -229,6 +235,9 @@ void Application::initQml() {
     QQuickWindow::setSceneGraphBackend(QSGRendererInterface::Software);
     m_engine.load(QUrl(QStringLiteral("qrc:///app.qml")));
   }
+
+  updatePalette();
+  connect(this, &QGuiApplication::paletteChanged, this, &Application::updatePalette);
 
   qDebug() << "Rendering backend:" << QQuickWindow::sceneGraphBackend();
 }
@@ -318,5 +327,16 @@ void Application::OnNewUpdateAvailable(QString& url) {
       nullptr, "New update available",
       QCoreApplication::translate(
           "RDM", "Please download new version of Redis Desktop Manager: %1")
-          .arg(url));
+              .arg(url));
+}
+
+void Application::updatePalette()
+{
+    if (m_engine.rootObjects().size() == 0) {
+        qWarning() << "Cannot update palette. Root object is not loaded.";
+        return;
+    }
+
+    m_engine.rootObjects().at(0)->setProperty(
+                "palette", QGuiApplication::palette());
 }

@@ -23,7 +23,7 @@ Repeater {
                 icon.source: "qrc:/images/key.svg"
 
                 text: tabName
-                ToolTip.text: keyName
+                ToolTip.text: keyModel && tabName <= keyName? keyName : ""
 
                 onCloseClicked: {
                     valuesModel.closeTab(keyIndex)
@@ -108,8 +108,9 @@ Repeater {
             valuesModel.setCurrentTab(keyIndex)
         }
 
-        Item {
+        Rectangle {
             id: wrapper
+            color: sysPalette.base
             anchors.fill: parent
             anchors.margins: 5
 
@@ -132,15 +133,16 @@ Repeater {
                     Layout.fillWidth: true
                     spacing: 5
 
-                    Text {
+                    Label {
                         Layout.preferredWidth: 70
-                        text: keyType.toUpperCase() + ":"; font.bold: true
+                        text: keyModel? keyType.toUpperCase() + ":" : "";
+                        font.bold: true
                     }
 
                     BetterTextField {
                         id: keyNameField
                         Layout.fillWidth: true
-                        text: keyName
+                        text: keyModel? keyName : ""
                         readOnly: true
                         objectName: "rdm_key_name_field"                                               
                     }
@@ -164,12 +166,12 @@ Repeater {
                                 implicitHeight: 100
                                 width: 500
 
-                                Text { text: qsTranslate("RDM","New name:") }
+                                Label { text: qsTranslate("RDM","New name:") }
                                 BetterTextField {
                                     id: newKeyName;
                                     Layout.fillWidth: true;
                                     objectName: "rdm_rename_key_field"
-                                    text: keyName
+                                    text: keyModel? keyName : ""
                                 }
                             }
 
@@ -182,11 +184,11 @@ Repeater {
                             }
 
                             visible: false
-                            standardButtons: StandardButton.Ok | StandardButton.Cancel
+                            standardButtons: Dialog.Ok | Dialog.Cancel
                         }
                     }
 
-                    Text {
+                    Label {
                         visible: keyType === "hyperloglog";
                         text:  qsTranslate("RDM","Size: ") + keyRowsCount
                     }
@@ -208,7 +210,7 @@ Repeater {
                                 implicitHeight: 100
                                 width: 500
 
-                                Text { text: qsTranslate("RDM","New TTL:") }
+                                Label { text: qsTranslate("RDM","New TTL:") }
                                 BetterTextField {
                                     id: newTTL;
                                     Layout.fillWidth: true;
@@ -226,7 +228,7 @@ Repeater {
                             }
 
                             visible: false                            
-                            standardButtons: StandardButton.Ok | StandardButton.Cancel
+                            standardButtons: Dialog.Ok | Dialog.Cancel
                         }
 
                         onClicked: {
@@ -257,6 +259,7 @@ Repeater {
                     }
 
                     BetterButton {
+                        objectName: "rdm_value_editor_reload_value_btn"
                         text: qsTranslate("RDM","Reload Value")
                         action: reLoadAction
                         visible: !isMultiRow
@@ -276,7 +279,7 @@ Repeater {
                         Layout.fillHeight: false
                         Layout.bottomMargin: 10
                         SplitView.minimumHeight: 250
-                        visible: isMultiRow
+                        visible: keyModel? isMultiRow : false
 
                         ColumnLayout {
                             id: tableLayout
@@ -297,11 +300,12 @@ Repeater {
                                         Layout.preferredHeight: 30
                                         Layout.preferredWidth: 75
                                         Layout.fillWidth: index !== 0
-                                        color: "lightgrey"
+                                        color: sysPalette.window
 
-                                        Text {
+                                        Label {
                                             anchors.centerIn: parent
                                             text: modelData
+                                            color: sysPalette.windowText
                                         }
                                     }
                                 }
@@ -327,6 +331,7 @@ Repeater {
                                         clip: true
                                         columnSpacing: 1
                                         rowSpacing: 1
+                                        reuseItems: false
                                         model: searchModel ? searchModel : null
 
                                         property int currentRow: -1
@@ -337,7 +342,7 @@ Repeater {
                                         property int totalPages: keyTab.keyModel ? Math.ceil(keyTab.keyModel.totalRowCount / maxItemsOnPage) : 0
                                         property bool forceLoading: false
                                         property int firstColumnWidth: 75
-                                        property int valueColumnWidth: keyTab.keyModel.columnNames.length == 2? tableLayout.width - table.firstColumnWidth - table.columnSpacing
+                                        property int valueColumnWidth:  keyTab.keyModel && keyTab.keyModel.columnNames.length == 2? tableLayout.width - table.firstColumnWidth - table.columnSpacing
                                                                                                               : (tableLayout.width - table.firstColumnWidth - table.columnSpacing) / 2
                                         Component.onCompleted: keyTab.table = table
 
@@ -347,11 +352,12 @@ Repeater {
                                                 column: 0
 
                                                 ValueTableCell {
+                                                    objectName: "rdm_value_table_cell_col1"
                                                     implicitWidth: table.firstColumnWidth
                                                     implicitHeight: 30
                                                     text: Number(display) + 1
                                                     selected: table.currentRow === row
-                                                    onClicked: table.currentRow = row
+                                                    onClicked: table.currentRow = row                                                  
                                                 }
                                             }
 
@@ -359,6 +365,7 @@ Repeater {
                                                 column: 1
 
                                                 ValueTableCell {
+                                                    objectName: "rdm_value_table_cell_col2"
                                                     implicitWidth: table.valueColumnWidth
                                                     implicitHeight: 30
                                                     text: renderText(display)
@@ -371,6 +378,7 @@ Repeater {
                                                 column: 2
 
                                                 ValueTableCell {
+                                                    objectName: "rdm_value_table_cell_col3"
                                                     implicitWidth: table.valueColumnWidth
                                                     implicitHeight: 30
 
@@ -399,8 +407,9 @@ Repeater {
 
                                         Connections {
                                             id: keyModelConnections
+                                            ignoreUnknownSignals: true
 
-                                            target: keyTab.keyModel
+                                            target: keyTab.keyModel ? keyTab.keyModel : null
 
                                             onError: {
                                                 valueErrorNotification.text = error
@@ -522,6 +531,7 @@ Repeater {
                                     height: 400                                    
 
                                     contentItem: Rectangle {
+                                        color: sysPalette.base
                                         implicitWidth: 800
                                         implicitHeight: PlatformUtils.isOSX()? 680 : 600
 
@@ -538,7 +548,7 @@ Repeater {
                                                 property int currentRow: -1
                                                 objectName: "rdm_add_row_dialog"
 
-                                                source: Editor.getEditorByTypeString(keyType)
+                                                source: keyTab.keyModel ? Editor.getEditorByTypeString(keyType) : ""
 
                                                 onLoaded: {
                                                     item.state = "add"
@@ -548,7 +558,7 @@ Repeater {
                                         }
                                     }
 
-                                    footer: DialogButtonBox {
+                                    footer: BetterDialogButtonBox {
                                         Button {
                                             DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
                                             objectName: "rdb_add_row_dialog_add_button"
@@ -622,6 +632,7 @@ Repeater {
                             }
 
                             BetterButton {
+                                objectName: "rdm_value_editor_reload_value_btn"
                                 Layout.fillWidth: true
                                 text: qsTranslate("RDM","Reload Value")
                                 iconSource: "qrc:/images/refresh.svg"
@@ -654,7 +665,7 @@ Repeater {
 
                                     Layout.fillWidth: true
 
-                                    readOnly: keyTab.keyModel.singlePageMode
+                                    readOnly: keyTab.keyModel ? keyTab.keyModel.singlePageMode : false
                                     placeholderText: qsTranslate("RDM","Search on page...")
 
                                     Component.onCompleted: {
@@ -664,7 +675,7 @@ Repeater {
 
                                 BetterButton {
                                     id: clearGlobalSearch
-                                    visible: keyTab.keyModel.singlePageMode
+                                    visible: keyTab.keyModel ? keyTab.keyModel.singlePageMode : false
 
                                     iconSource: "qrc:/images/clear.svg"
 
@@ -696,15 +707,10 @@ Repeater {
                                 Layout.fillHeight: true
                             }
 
-                            Text {
-                                visible: isMultiRow
-                                text:  qsTranslate("RDM","Size: ") + keyRowsCount
-                            }
-
                             Pagination {
                                 id: pagination
                                 Layout.fillWidth: true
-                                visible: isMultiRow
+                                visible: keyTab.keyModel ? isMultiRow : false
                             }
                         }
                     }
@@ -732,7 +738,7 @@ Repeater {
 
                             property int currentRow: -1
 
-                            source: Editor.getEditorByTypeString(keyType)
+                            source: keyTab.keyModel? Editor.getEditorByTypeString(keyType) : ""
 
                             function loadRowValue(row) {
                                 console.log("loading row value", row)
@@ -824,7 +830,7 @@ Repeater {
 
                         BusyIndicator { Layout.alignment: Qt.AlignHCenter;  running: true }
 
-                        Text {
+                        Label {
                             visible: loadingModel
                             text: tabName
                         }
